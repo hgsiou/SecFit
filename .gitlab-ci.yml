@@ -10,6 +10,7 @@ test:
     - cd backend/secfit
     - apt-get update -qy
     - pip install -r requirements.txt
+    - python manage.py test
 
 staging:
   type: deploy
