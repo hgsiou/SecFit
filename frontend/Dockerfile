@@ -18,7 +18,7 @@ RUN echo "const HOST = '${URL_PREFIX}${DOMAIN}:${PORT_PREFIX}${GROUPID}';" > ./w
 
 # Install cordova
 # Also install shelljs because of windows for some reason
-RUN apt-get update -y && apt-get install npm -y && npm install -g cordova && npm install shelljs
+RUN apt-get update -y && apt-get install npm -y && npm install -g cordova
 
 # Run cordova app
 CMD [ "cordova", "run", "browser", "--release", "--port=3000" ]
