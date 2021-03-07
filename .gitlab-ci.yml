@@ -1,7 +1,7 @@
 stages:
     - test
     - staging
-  
+
 test:
   image: python:3.8
   stage: test
@@ -20,8 +20,11 @@ staging:
     - apt-get update -qy
     - apt-get install -y ruby-dev
     - gem install dpl
-    # TODO: different apps for backend and frontend, seems like we have to tell Heroku a lot about our project structure???
-    # - dpl --provider=heroku --app=sec-fit-t18 --api-key=$HEROKU_STAGING_API_KEY
-    # - dpl --provider=heroku --app=sec-fit-t18 --api-key=$HEROKU_STAGING_API_KEY
+
+    - cd backend/secfit
+    - dpl --provider=heroku --app=sec-fit-t18 --api-key=$HEROKU_STAGING_API_KEY
+    - cd -
+
+    - dpl --provider=heroku --app=sec-fit-t18-fe --api-key=$HEROKU_STAGING_API_KEY
   only:
     - master

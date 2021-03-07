@@ -1,5 +1,7 @@
 # SecFit
 
+> STAGING DEPLOYMENT: https://sec-fit-t18-fe.herokuapp.com/
+
 SecFit (Secure Fitness) is a hybrid mobile application for fitness logging.
 
 ## Deploy with Docker
