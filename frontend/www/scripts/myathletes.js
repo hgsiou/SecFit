@@ -3,16 +3,17 @@ async function displayCurrentRoster() {
     let templateEmptyAthlete = document.querySelector("#template-empty-athlete");
     let controls = document.querySelector("#controls");
 
+    
     let currentUser = await getCurrentUser();
     for (let athleteUrl of currentUser.athletes) {
         let response = await sendRequest("GET", athleteUrl);
         let athlete = await response.json();
-
-        createFilledRow(templateFilledAthlete, athlete.username, controls, false);
+        
+        createFilledRow(templateFilledAthlete, athlete.username, athlete.workouts, controls, false);
     }
-    
+
     let status = "p";   // pending
-    let category = "sent";  
+    let category = "sent";
     let response = await sendRequest("GET", `${HOST}/api/offers/?status=${status}&category=${category}`);
     if (!response.ok) {
         let data = await response.json();
@@ -24,7 +25,7 @@ async function displayCurrentRoster() {
         for (let offer of offers.results) {
             let response = await sendRequest("GET", offer.recipient);
             let recipient = await response.json();
-            createFilledRow(templateFilledAthlete, `${recipient.username} (pending)`, controls, true);
+            createFilledRow(templateFilledAthlete, `${recipient.username} (pending)`, [], controls, true);
         }
     }
 
@@ -35,11 +36,12 @@ async function displayCurrentRoster() {
     controls.appendChild(emptyDiv);
 }
 
-function createFilledRow(templateFilledAthlete, inputValue, controls, disabled) {
+function createFilledRow(templateFilledAthlete, inputValue, workouts, controls, disabled) {
     let filledClone = templateFilledAthlete.content.cloneNode(true);
     let filledDiv = filledClone.querySelector("div");
     let filledInput = filledDiv.querySelector("input");
     let filledButton = filledDiv.querySelector("button");
+    let statsDiv = filledDiv.querySelector("div")
     filledInput.value = inputValue;
     filledInput.disabled = disabled;
     if (!disabled) {
@@ -48,6 +50,10 @@ function createFilledRow(templateFilledAthlete, inputValue, controls, disabled) 
     else {
         filledButton.disabled = true;
     }
+    statsDiv.innerText = `(${workouts.length} performed workouts)`
+
+    // TODO: fetch x for x of workouts, and display workout details
+
     controls.appendChild(filledDiv);
 }
 
@@ -70,7 +76,7 @@ async function displayFiles() {
         let tabPanel = document.querySelector(`#tab-contents-${athlete.username}`)
         if (!tabPanel) {
             tabPanel = createTabContents(templateAthlete, athlete, listTab, templateFiles, navTabContent);
-        } 
+        }
 
         let divFiles = tabPanel.querySelector(".uploaded-files");
         let aFile = createFileLink(templateFile, file.file);
@@ -151,7 +157,7 @@ function removeAthleteRow(event) {
 async function submitRoster() {
     let rosterInputs = document.querySelectorAll('input[name="athlete"]');
 
-    let body = {"athletes": []};
+    let body = { "athletes": [] };
     let currentUser = await getCurrentUser();
 
     for (let rosterInput of rosterInputs) {
@@ -164,7 +170,7 @@ async function submitRoster() {
                     body.athletes.push(athlete.id);
                 } else {
                     // create offer
-                    let body = {'status': 'p', 'recipient': athlete.url};
+                    let body = { 'status': 'p', 'recipient': athlete.url };
                     let response = await sendRequest("POST", `${HOST}/api/offers/`, body);
                     if (!response.ok) {
                         let data = await response.json();
@@ -214,7 +220,7 @@ async function uploadFiles(event, athlete) {
 window.addEventListener("DOMContentLoaded", async () => {
     await displayCurrentRoster();
     await displayFiles();
-    
+
     let buttonSubmitRoster = document.querySelector("#button-submit-roster");
     buttonSubmitRoster.addEventListener("click", async () => await submitRoster());
 });
