@@ -46,15 +46,17 @@ class Workout(models.Model):
     owner = models.ForeignKey(
         get_user_model(), on_delete=models.CASCADE, related_name="workouts"
     )
-
+    athletes = models.CharField(max_length=500, default="")
     # Visibility levels
     PUBLIC = "PU"  # Visible to all authenticated users
     COACH = "CO"  # Visible only to owner and their coach
     PRIVATE = "PR"  # Visible only to owner
+    LIMITED = "LT" # Visible to owner and athletes
     VISIBILITY_CHOICES = [
         (PUBLIC, "Public"),
         (COACH, "Coach"),
         (PRIVATE, "Private"),
+        (LIMITED, "Limited")
     ]  # Choices for visibility level
 
     visibility = models.CharField(

@@ -1,3 +1,14 @@
+async function createNewGroupSession(athletes) {
+    let currentUser = await getCurrentUser();
+    if (currentUser.athletes.length == 0) {
+        let alert = createAlert("You need to have athletes in your roster to create a new group training session", null);
+        document.body.prepend(alert);
+    }
+    else {
+        window.location.replace("groupworkout.html");
+    }
+}
+
 async function displayCurrentRoster() {
     let templateFilledAthlete = document.querySelector("#template-filled-athlete");
     let templateEmptyAthlete = document.querySelector("#template-empty-athlete");
@@ -5,6 +16,8 @@ async function displayCurrentRoster() {
 
     
     let currentUser = await getCurrentUser();
+    console.log(currentUser.athletes)
+
     for (let athleteUrl of currentUser.athletes) {
         let response = await sendRequest("GET", athleteUrl);
         let athlete = await response.json();
@@ -223,4 +236,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     let buttonSubmitRoster = document.querySelector("#button-submit-roster");
     buttonSubmitRoster.addEventListener("click", async () => await submitRoster());
+
+    let createNewGroupTrainingSession = document.querySelector("#create-new-group-training-session")
+    createNewGroupTrainingSession.addEventListener("click", async () => await createNewGroupSession())
 });

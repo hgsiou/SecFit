@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from rest_framework.serializers import HyperlinkedRelatedField
 from workouts.models import Workout, Exercise, ExerciseInstance, WorkoutFile, RememberMe
+from workouts.notification import sendNotification
 
 
 class ExerciseInstanceSerializer(serializers.HyperlinkedModelSerializer):
@@ -75,6 +76,7 @@ class WorkoutSerializer(serializers.HyperlinkedModelSerializer):
             "notes",
             "owner",
             "owner_username",
+            "athletes",
             "visibility",
             "exercise_instances",
             "files",
@@ -99,7 +101,7 @@ class WorkoutSerializer(serializers.HyperlinkedModelSerializer):
             files_data = validated_data.pop("files")
 
         workout = Workout.objects.create(**validated_data)
-
+        sendNotification(workout.athletes.split(","))
         for exercise_instance_data in exercise_instances_data:
             ExerciseInstance.objects.create(workout=workout, **exercise_instance_data)
         for file_data in files_data:
@@ -128,6 +130,9 @@ class WorkoutSerializer(serializers.HyperlinkedModelSerializer):
         instance.name = validated_data.get("name", instance.name)
         instance.notes = validated_data.get("notes", instance.notes)
         instance.visibility = validated_data.get("visibility", instance.visibility)
+        instance.athletes = validated_data.get("athletes", instance.athletes)
+        '''if not instance.athletes:
+            instance.athletes = []'''
         instance.date = validated_data.get("date", instance.date)
         instance.save()
 

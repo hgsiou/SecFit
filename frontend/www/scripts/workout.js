@@ -13,6 +13,7 @@ async function retrieveWorkout(id) {
         document.body.prepend(alert);
     } else {
         workoutData = await response.json();
+        console.log(workoutData)
         let form = document.querySelector("#form-workout");
         let formData = new FormData(form);
 
@@ -32,7 +33,16 @@ async function retrieveWorkout(id) {
         }
 
         let input = form.querySelector("select:disabled");
+        if (workoutData["visibility"] == "LT") {
+            var option = document.createElement("option");
+            option.value = "LT"
+            option.text = "Limited";
+            input.add(option)
+        } 
+
+
         input.value = workoutData["visibility"];
+
         // files
         let filesDiv = document.querySelector("#uploaded-files");
         for (let file of workoutData.files) {
@@ -112,6 +122,9 @@ function handleEditWorkoutButtonClick() {
     
     setReadOnly(false, "#form-workout");
     document.querySelector("#inputOwner").readOnly = true;  // owner field should still be readonly 
+    if (document.querySelector("#inputVisibility").value == "LT") {
+        document.querySelector("#inputVisibility").disabled = true;
+    }
 
     editWorkoutButton.className += " hide";
     okWorkoutButton.className = okWorkoutButton.className.replace(" hide", "");
@@ -158,7 +171,11 @@ function generateWorkoutForm() {
     let date = new Date(formData.get('date')).toISOString();
     submitForm.append("date", date);
     submitForm.append("notes", formData.get("notes"));
-    submitForm.append("visibility", formData.get("visibility"));
+    let visibility = formData.get("visibility")
+    if (!visibility) {
+        visibility = "LT"
+    }
+    submitForm.append("visibility", visibility);
 
     // adding exercise instances
     let exerciseInstances = [];
@@ -324,6 +341,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         const id = urlParams.get('id');
         let workoutData = await retrieveWorkout(id);
         await retrieveComments(id);
+
+        if (workoutData["visibility"] == "LT") {
+            document.querySelector("#group-list").innerHTML = "Attending athletes: " + workoutData.athletes.toString()
+        }
 
         if (workoutData["owner"] == currentUser.url) {
             editWorkoutButton.classList.remove("hide");

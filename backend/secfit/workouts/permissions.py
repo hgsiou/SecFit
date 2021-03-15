@@ -53,6 +53,15 @@ class IsPublic(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.visibility == "PU"
 
+class isLimited(permissions.BasePermission):
+    """Checks whether the object (workout) has visibility of limited."""
+    def has_object_permission(self, request, view, obj):
+        return obj.visibility == "LT"
+
+class isRelevantAthlete(permissions.BasePermission):
+    """Checks whether the athlete is belonging to the coach"""
+    def has_object_permission(self, request, view, obj):
+        return obj.owner == request.user.coach
 
 class IsWorkoutPublic(permissions.BasePermission):
     """Checks whether the object's workout has visibility of Public."""

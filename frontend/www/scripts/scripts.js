@@ -165,25 +165,28 @@ function createAlert(header, data) {
   alertDiv.appendChild(button);
 
   let ul = document.createElement("ul");
-  if ("detail" in data) {
-    let li = document.createElement("li");
-    li.innerText = data["detail"];
-    ul.appendChild(li);
-  } else {
-    for (let key in data) {
+  if (data) {
+    if ("detail" in data) {
       let li = document.createElement("li");
-      li.innerText = key;
-
-      let innerUl = document.createElement("ul");
-      for (let message of data[key]) {
-        let innerLi = document.createElement("li");
-        innerLi.innerText = message;
-        innerUl.appendChild(innerLi);
-      }
-      li.appendChild(innerUl);
+      li.innerText = data["detail"];
       ul.appendChild(li);
+    } else {
+      for (let key in data) {
+        let li = document.createElement("li");
+        li.innerText = key;
+  
+        let innerUl = document.createElement("ul");
+        for (let message of data[key]) {
+          let innerLi = document.createElement("li");
+          innerLi.innerText = message;
+          innerUl.appendChild(innerLi);
+        }
+        li.appendChild(innerUl);
+        ul.appendChild(li);
+      }
     }
   }
+  
   alertDiv.appendChild(ul);
 
   return alertDiv;

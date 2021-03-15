@@ -20,6 +20,8 @@ from workouts.permissions import (
     IsReadOnly,
     IsPublic,
     IsWorkoutPublic,
+    isLimited,
+    isRelevantAthlete,
 )
 from workouts.mixins import CreateListModelMixin
 from workouts.models import Workout, Exercise, ExerciseInstance, WorkoutFile
@@ -119,7 +121,7 @@ class WorkoutList(
         JSONParser,
     ]  # For parsing JSON and Multi-part requests
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ["name", "date", "owner__username"]
+    ordering_fields = ["name", "date", "owner__username", "id"]
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -137,9 +139,11 @@ class WorkoutList(
             # - The workout has public visibility
             # - The owner of the workout is the requesting user
             # - The workout has coach visibility and the requesting user is the owner's coach
+            # - The coach of the user is the owner of the workout
             qs = Workout.objects.filter(
                 Q(visibility="PU")
                 | (Q(visibility="CO") & Q(owner__coach=self.request.user))
+                | (Q(visibility="LT") & (Q(owner__username=self.request.user) | Q(owner__username=self.request.user.coach)))
             ).distinct()
 
         return qs
@@ -155,12 +159,11 @@ class WorkoutDetail(
 
     HTTP methods: GET, PUT, DELETE
     """
-
     queryset = Workout.objects.all()
     serializer_class = WorkoutSerializer
     permission_classes = [
         permissions.IsAuthenticated
-        & (IsOwner | (IsReadOnly & (IsCoachAndVisibleToCoach | IsPublic)))
+        & (IsOwner| (IsReadOnly & (IsCoachAndVisibleToCoach | IsPublic | (isLimited & isRelevantAthlete))))
     ]
     parser_classes = [MultipartJsonParser, JSONParser]
 

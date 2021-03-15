@@ -5,6 +5,7 @@ async function fetchWorkouts(ordering) {
         throw new Error(`HTTP error! status: ${response.status}`);
     } else {
         let data = await response.json();
+        console.log(data)
 
         let workouts = data.results;
         let container = document.getElementById('div-content');
@@ -56,6 +57,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     currentSort.innerHTML = (ordering.startsWith("-") ? "Descending" : "Ascending") + " " + ordering.replace("-", "");
 
     let currentUser = await getCurrentUser();
+    console.log(currentUser)
     // grab username
     if (ordering.includes("owner")) {
         ordering += "__username";
@@ -91,6 +93,18 @@ window.addEventListener("DOMContentLoaded", async () => {
                         break;
                     case "list-public-workouts-list":
                         if (workout.visibility == "PU") {
+                            workoutAnchor.classList.remove('hide');
+                        } else {
+                            workoutAnchor.classList.add('hide');
+                        }
+                        break;
+                    case "list-my-group-workouts-list":
+                        console.log(currentUser.username)
+                        console.log(workout.athletes.split(","))
+                        if (workout.athletes == "") {
+                            workout.athletes = "[]"
+                        }
+                        if (workout.visibility == "LT" && (workout.owner == currentUser.url ||  workout.athletes.split(",").includes(currentUser.username))) {
                             workoutAnchor.classList.remove('hide');
                         } else {
                             workoutAnchor.classList.add('hide');
