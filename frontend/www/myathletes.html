@@ -58,8 +58,25 @@
             <button class="btn btn-danger btn-remove" type="button">
                 <i class="fas fa-minus"></i>
             </button>
-            <div></div>
         </div>
+    </template>
+
+    <template id="template-stats-creator">
+        <div class="input-group">
+            <select class="custom-select"></select>
+            <button class="btn btn-info" type="button">
+                View statistics
+            </button>
+        </div>
+    </template>
+
+    <template id="template-athlete-stats">
+        <div></div>
+    </template>
+
+    <template id="template-athlete-table">
+        <table class="table">
+        </table>
     </template>
 
     <template id="template-empty-athlete">
@@ -92,9 +109,11 @@
         <a class="me-2 link-block" href="#"></a>
     </template>
 
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/defaults.js"></script>
     <script src="scripts/scripts.js"></script>
     <script src="scripts/myathletes.js"></script>
+    <script src="scripts/stats.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
         crossorigin="anonymous"></script>
