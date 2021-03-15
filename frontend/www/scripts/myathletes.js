@@ -11,23 +11,28 @@ async function createNewGroupSession(athletes) {
 
 async function displayCurrentRoster() {
     let templateFilledAthlete = document.querySelector("#template-filled-athlete");
+    let templateStatsCreator = document.querySelector("#template-stats-creator");
     let templateEmptyAthlete = document.querySelector("#template-empty-athlete");
     let controls = document.querySelector("#controls");
 
-    
     let currentUser = await getCurrentUser();
-    console.log(currentUser.athletes)
+    let response = await sendRequest('GET', `${HOST}/api/exercises/`)
+
+    if (!response.ok) throw new Error('Could not load exercises: ' + JSON.stringify(await response.json()))
+
+    const { results: exercises } = await response.json()
 
     for (let athleteUrl of currentUser.athletes) {
         let response = await sendRequest("GET", athleteUrl);
         let athlete = await response.json();
-        
-        createFilledRow(templateFilledAthlete, athlete.username, athlete.workouts, controls, false);
+
+        createFilledRow(templateFilledAthlete, athlete.username, controls, false);
+        createStatsCreatorRow(templateStatsCreator, athlete.workouts, exercises, controls)
     }
 
     let status = "p";   // pending
     let category = "sent";
-    let response = await sendRequest("GET", `${HOST}/api/offers/?status=${status}&category=${category}`);
+    response = await sendRequest("GET", `${HOST}/api/offers/?status=${status}&category=${category}`);
     if (!response.ok) {
         let data = await response.json();
         let alert = createAlert("Could not retrieve offers!", data);
@@ -38,7 +43,7 @@ async function displayCurrentRoster() {
         for (let offer of offers.results) {
             let response = await sendRequest("GET", offer.recipient);
             let recipient = await response.json();
-            createFilledRow(templateFilledAthlete, `${recipient.username} (pending)`, [], controls, true);
+            createFilledRow(templateFilledAthlete, `${recipient.username} (pending)`, controls, true);
         }
     }
 
@@ -49,12 +54,11 @@ async function displayCurrentRoster() {
     controls.appendChild(emptyDiv);
 }
 
-function createFilledRow(templateFilledAthlete, inputValue, workouts, controls, disabled) {
+function createFilledRow(templateFilledAthlete, inputValue, controls, disabled) {
     let filledClone = templateFilledAthlete.content.cloneNode(true);
     let filledDiv = filledClone.querySelector("div");
     let filledInput = filledDiv.querySelector("input");
     let filledButton = filledDiv.querySelector("button");
-    let statsDiv = filledDiv.querySelector("div")
     filledInput.value = inputValue;
     filledInput.disabled = disabled;
     if (!disabled) {
@@ -63,11 +67,110 @@ function createFilledRow(templateFilledAthlete, inputValue, workouts, controls, 
     else {
         filledButton.disabled = true;
     }
-    statsDiv.innerText = `(${workouts.length} performed workouts)`
-
-    // TODO: fetch x for x of workouts, and display workout details
 
     controls.appendChild(filledDiv);
+}
+
+function createStatsCreatorRow(templateStatsCreator, workoutUrls, exercises, controls) {
+    let clone = templateStatsCreator.content.cloneNode(true)
+    let div = clone.querySelector('div');
+    let select = clone.querySelector('select')
+    let button = div.querySelector('button')
+
+    select.innerHTML = `
+<option selected value="-1">All exercises</option>
+${exercises.map(e => `<option value="${e.id}">${e.name}</option>`)}
+`
+
+    button.addEventListener("click", async e => {
+        let templateAthleteStats = document.querySelector("#template-athlete-stats");
+        let templateAthleteTable = document.querySelector("#template-athlete-table");
+        const parent = e.currentTarget.parentElement
+        const exerciseFilter = parseInt(select.value, 10)
+
+        const workouts = await Promise.all(workoutUrls.map(async w => {
+            const response = await sendRequest('GET', w)
+            if (response.ok) {
+                return await response.json()
+            } else {
+                throw new Error('Could not fetch workouts')
+            }
+        }))
+        const enriched = (await Promise.all(workouts.map(async w => ({
+            ...w,
+            exercise_instances: (await Promise.all(w.exercise_instances.map(async e => ({
+                ...e,
+                exercise: await getExercise(e.exercise),
+            })))).filter(e => exerciseFilter === -1 || e.exercise.id === exerciseFilter),
+        })))).filter(w => w.exercise_instances.length > 0)
+
+        await createTableRow(templateAthleteTable, enriched, parent)
+        await createStatsRow(templateAthleteStats, enriched, parent)
+        parent.remove()
+    })
+
+    controls.appendChild(div)
+}
+
+async function getExercise(exercise_instance) {
+    const response = await sendRequest('GET', exercise_instance)
+    if (response.ok) {
+        return await response.json()
+    } else {
+        throw new Error('Could not fetch exercise instance')
+    }
+}
+
+async function createStatsRow(templateAthleteStats, workouts, controls) {
+    if (workouts.length < 2) return
+
+    let statsClone = templateAthleteStats.content.cloneNode(true)
+    let statsDiv = statsClone.querySelector("div")
+    controls.after(statsDiv)
+
+    const data = await getStats(workouts)
+    const options = {
+        chart: { type: 'line' },
+        xaxis: { type: 'datetime' },
+        series: [{ name: 'exercises', data: data }],
+        title: { text: `${workouts.length} performed workout(s)` }
+    }
+    const chart = new ApexCharts(statsDiv, options);
+    chart.render()
+}
+
+async function createTableRow(templateAthleteTable, enriched, controls) {
+    let tableClone = templateAthleteTable.content.cloneNode(true)
+    let table = tableClone.querySelector('table')
+
+    table.innerHTML = `
+<thead>
+    <tr>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Exercises</th>
+    </tr>
+</thead>
+<tbody>
+    ${enriched.length > 0
+            ? (enriched.map(w => `
+    <tr>
+        <td>${w.name}</td>
+        <td>${new Date(w.date).toLocaleString()}</td>
+        <td>${w.exercise_instances.map(e => `${e.sets}x${e.number} ${e.exercise.name}`).join(', ')}</td>
+    </tr>
+    `)).join('')
+            : `
+    <tr>
+        <td></td>
+        <td><i>(no data)</i></td>
+        <td></td>
+    </tr>
+    `}
+</tbody>
+`;
+
+    controls.after(table)
 }
 
 async function displayFiles() {
@@ -170,8 +273,8 @@ function removeAthleteRow(event) {
 async function submitRoster() {
     let rosterInputs = document.querySelectorAll('input[name="athlete"]');
 
-    let body = { "athletes": [] };
     let currentUser = await getCurrentUser();
+    let body = { favourite_exercise: currentUser.favourite_exercise, "athletes": [] };
 
     for (let rosterInput of rosterInputs) {
         if (!rosterInput.disabled && rosterInput.value) {
