@@ -50,7 +50,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         country = validated_data["country"]
         city = validated_data["city"]
         street_address = validated_data["street_address"]
-        favourite_exercise = validated_data["favourite_exercise"]
+        favourite_exercise = validated_data.get("favourite_exercise", "")
         
         user_obj = get_user_model()(username=username, email=email, phone_number=phone_number, country=country, city=city, street_address=street_address, favourite_exercise=favourite_exercise)
         user_obj.set_password(password)
