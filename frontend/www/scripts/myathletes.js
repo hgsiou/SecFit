@@ -262,8 +262,8 @@ function removeAthleteRow(event) {
 async function submitRoster() {
     let rosterInputs = document.querySelectorAll('input[name="athlete"]');
 
-    let body = { "athletes": [] };
     let currentUser = await getCurrentUser();
+    let body = { favourite_exercise: currentUser.favourite_exercise, "athletes": [] };
 
     for (let rosterInput of rosterInputs) {
         if (!rosterInput.disabled && rosterInput.value) {

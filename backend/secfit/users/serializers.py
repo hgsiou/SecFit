@@ -26,6 +26,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             "workouts",
             "coach_files",
             "athlete_files",
+            "favourite_exercise"
         ]
 
     def validate_password(self, value):
@@ -49,7 +50,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         country = validated_data["country"]
         city = validated_data["city"]
         street_address = validated_data["street_address"]
-        user_obj = get_user_model()(username=username, email=email, phone_number=phone_number, country=country, city=city, street_address=street_address)
+        favourite_exercise = validated_data["favourite_exercise"]
+        
+        user_obj = get_user_model()(username=username, email=email, phone_number=phone_number, country=country, city=city, street_address=street_address, favourite_exercise=favourite_exercise)
         user_obj.set_password(password)
         user_obj.save()
 
@@ -73,17 +76,23 @@ class UserGetSerializer(serializers.HyperlinkedModelSerializer):
             "workouts",
             "coach_files",
             "athlete_files",
+            "favourite_exercise"
         ]
 
 
 class UserPutSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["athletes"]
+        fields = ["athletes", "favourite_exercise"]
 
     def update(self, instance, validated_data):
         athletes_data = validated_data["athletes"]
+        favourite_exercise_data = validated_data["favourite_exercise"]
+
         instance.athletes.set(athletes_data)
+        
+        instance.favourite_exercise = favourite_exercise_data
+        instance.save()
 
         return instance
 
